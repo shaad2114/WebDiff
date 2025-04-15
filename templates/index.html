@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WebDiff - Website Text Comparator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #1e3c72, #2a5298);
+      margin: 0;
+      padding: 0;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      background: #ffffff10;
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      margin-top: 4rem;
+      max-width: 600px;
+      width: 90%;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .version {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #ddd;
+      margin-bottom: 1.5rem;
+    }
+
+    label {
+      font-weight: 600;
+      margin-top: 1rem;
+      display: block;
+    }
+
+    input[type="url"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 0.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 1.5rem;
+      background-color: #28a745;
+      color: #fff;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #218838;
+      transform: scale(1.03);
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 1rem;
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+
+    @media screen and (max-width: 600px) {
+      h1 {
+        font-size: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🕵️‍♂️ WebDiff</h1>
+    <div class="version">Website Text Comparator - Version 1.1</div>
+    <form method="POST">
+      <label for="archived_url">Archived URL:</label>
+      <input type="url" id="archived_url" name="archived_url" placeholder="https://web.archive.org/..." required />
+
+      <label for="current_url">Current URL:</label>
+      <input type="url" id="current_url" name="current_url" placeholder="https://www.gov.uk/..." required />
+
+      <button type="submit">🔍 Compare & Download Excel</button>
+    </form>
+  </div>
+  <footer>
+    © 2025 WebDiff Tool — Built for intelligent document comparison
+  </footer>
+</body>
+</html>

@@ -10,12 +10,17 @@ from datetime import datetime
 app = Flask(__name__)
 
 def get_text_from_url(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, 'html.parser')
-    for tag in soup(['script', 'style']):
-        tag.decompose()
-    return soup.get_text(separator='\n', strip=True)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Will raise an HTTPError if the response code is not 200
+        soup = BeautifulSoup(response.text, 'html.parser')
+        # Remove unwanted tags
+        for tag in soup(['script', 'style']):
+            tag.decompose()
+        return soup.get_text(separator='\n', strip=True)
+    except requests.exceptions.RequestException as e:
+        # Catch any HTTP errors, including timeouts, connection errors, etc.
+        raise Exception(f"Error fetching URL {url}: {e}")
 
 def compare_and_align_lines(old_text, new_text):
     old_lines = old_text.splitlines()
@@ -50,13 +55,17 @@ def save_to_excel(data, save_path):
 
     headers = ['Line No.', 'Archived Text', 'Current Text', 'Status']
     ws.append(headers)
+
+    # Style header row
     for cell in ws[1]:
         cell.font = Font(bold=True)
         cell.fill = PatternFill(start_color="DDDDDD", fill_type="solid")
 
+    # Populate the rows with the comparison results
     for idx, (old, new, status) in enumerate(data, start=1):
         ws.append([idx, old, new, status])
 
+    # Save the file to the specified path
     wb.save(save_path)
 
 @app.route('/compare', methods=['POST'])
@@ -65,22 +74,33 @@ def compare():
     url1 = data.get('archived_url')
     url2 = data.get('current_url')
 
+    # Validate that both URLs are provided
     if not url1 or not url2:
         return jsonify({'error': 'Both URLs are required'}), 400
 
     try:
+        # Get the text content from both URLs
         text1 = get_text_from_url(url1)
         text2 = get_text_from_url(url2)
+
+        # Compare the two texts line by line
         comparison = compare_and_align_lines(text1, text2)
 
+        # Generate a timestamp for the file name
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         file_path = f'comparisons/diff_{timestamp}.xlsx'
+
+        # Ensure the 'comparisons' directory exists
         os.makedirs('comparisons', exist_ok=True)
+
+        # Save the comparison data to an Excel file
         save_to_excel(comparison, file_path)
 
+        # Return the Excel file as an attachment for download
         return send_file(file_path, as_attachment=True)
 
     except Exception as e:
+        # Return a generic error message if something goes wrong
         return jsonify({'error': str(e)}), 500
 
 @app.route('/')

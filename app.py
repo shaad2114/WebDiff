@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, send_file
+from flask import Flask, request, send_file, jsonify
 import requests
 from bs4 import BeautifulSoup
 import difflib
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 import os
-import tempfile
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -22,6 +22,7 @@ def compare_and_align_lines(old_text, new_text):
     new_lines = new_text.splitlines()
     sm = difflib.SequenceMatcher(None, old_lines, new_lines)
     result = []
+
     for opcode, i1, i2, j1, j2 in sm.get_opcodes():
         if opcode == 'equal':
             for i in range(i2 - i1):
@@ -39,40 +40,52 @@ def compare_and_align_lines(old_text, new_text):
         elif opcode == 'insert':
             for j in range(j1, j2):
                 result.append(('', new_lines[j], 'Added'))
+
     return result
 
-def save_to_excel(comparison_result):
+def save_to_excel(data, save_path):
     wb = Workbook()
     ws = wb.active
     ws.title = "Comparison"
 
-    headers = ['Line Number', 'Archived Text', 'Current Text', 'Status']
+    headers = ['Line No.', 'Archived Text', 'Current Text', 'Status']
     ws.append(headers)
     for cell in ws[1]:
         cell.font = Font(bold=True)
         cell.fill = PatternFill(start_color="DDDDDD", fill_type="solid")
 
-    for idx, (old_line, new_line, status) in enumerate(comparison_result, start=1):
-        ws.append([idx, old_line, new_line, status])
+    for idx, (old, new, status) in enumerate(data, start=1):
+        ws.append([idx, old, new, status])
 
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
-    wb.save(temp_file.name)
-    return temp_file.name
+    wb.save(save_path)
 
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        archived_url = request.form['archived_url']
-        current_url = request.form['current_url']
-        try:
-            archived_text = get_text_from_url(archived_url)
-            current_text = get_text_from_url(current_url)
-            comparison_result = compare_and_align_lines(archived_text, current_text)
-            excel_path = save_to_excel(comparison_result)
-            return send_file(excel_path, as_attachment=True, download_name='comparison_report.xlsx')
-        except Exception as e:
-            return f"<h2>Error occurred:</h2><pre>{e}</pre>"
-    return render_template('index.html')
+@app.route('/compare', methods=['POST'])
+def compare():
+    data = request.json
+    url1 = data.get('archived_url')
+    url2 = data.get('current_url')
+
+    if not url1 or not url2:
+        return jsonify({'error': 'Both URLs are required'}), 400
+
+    try:
+        text1 = get_text_from_url(url1)
+        text2 = get_text_from_url(url2)
+        comparison = compare_and_align_lines(text1, text2)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_path = f'comparisons/diff_{timestamp}.xlsx'
+        os.makedirs('comparisons', exist_ok=True)
+        save_to_excel(comparison, file_path)
+
+        return send_file(file_path, as_attachment=True)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/')
+def home():
+    return "WebDiff API - Post to /compare"
 
 if __name__ == '__main__':
     app.run(debug=True)

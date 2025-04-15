@@ -1,109 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>WebDiff - Website Text Comparator</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #1e3c72, #2a5298);
-      margin: 0;
-      padding: 0;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compare Two Websites - WebDiff</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
 
-    .container {
-      background: #ffffff10;
-      backdrop-filter: blur(10px);
-      padding: 2rem;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-      margin-top: 4rem;
-      max-width: 600px;
-      width: 90%;
-    }
+        .container {
+            width: 50%;
+            margin: auto;
+            text-align: center;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
 
-    h1 {
-      text-align: center;
-      font-size: 2rem;
-      margin-bottom: 0.2rem;
-    }
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
 
-    .version {
-      text-align: center;
-      font-size: 0.9rem;
-      color: #ddd;
-      margin-bottom: 1.5rem;
-    }
+        input {
+            padding: 10px;
+            margin: 10px;
+            width: 80%;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
 
-    label {
-      font-weight: 600;
-      margin-top: 1rem;
-      display: block;
-    }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-    input[type="url"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 0.5rem;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-    }
+        button:hover {
+            background-color: #45a049;
+        }
 
-    button {
-      width: 100%;
-      padding: 12px;
-      margin-top: 1.5rem;
-      background-color: #28a745;
-      color: #fff;
-      font-size: 1rem;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
+        #result-container {
+            margin-top: 30px;
+            display: none;
+        }
 
-    button:hover {
-      background-color: #218838;
-      transform: scale(1.03);
-    }
+        #download-btn {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-    footer {
-      margin-top: auto;
-      padding: 1rem;
-      font-size: 0.8rem;
-      color: #aaa;
-    }
+        #download-btn:hover {
+            background-color: #0056b3;
+        }
 
-    @media screen and (max-width: 600px) {
-      h1 {
-        font-size: 1.5rem;
-      }
-    }
-  </style>
+    </style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>🕵️‍♂️ WebDiff</h1>
-    <div class="version">Website Text Comparator - Version 1.1</div>
-    <form method="POST">
-      <label for="archived_url">Archived URL:</label>
-      <input type="url" id="archived_url" name="archived_url" placeholder="https://web.archive.org/..." required />
+    <div class="container">
+        <h1>Compare Two Websites</h1>
+        <form id="url-form">
+            <input type="url" id="url1" placeholder="Enter first website URL" required>
+            <input type="url" id="url2" placeholder="Enter second website URL" required>
+            <button type="submit">Compare</button>
+        </form>
 
-      <label for="current_url">Current URL:</label>
-      <input type="url" id="current_url" name="current_url" placeholder="https://www.gov.uk/..." required />
+        <div id="result-container">
+            <h2>Comparison Results</h2>
+            <button id="download-btn">Download Excel</button>
+        </div>
+    </div>
 
-      <button type="submit">🔍 Compare & Download Excel</button>
-    </form>
-  </div>
-  <footer>
-    © 2025 WebDiff Tool — Built for intelligent document comparison
-  </footer>
+    <script>
+        // Listen for form submission
+        document.getElementById("url-form").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            // Get input values
+            const url1 = document.getElementById("url1").value;
+            const url2 = document.getElementById("url2").value;
+
+            // Send POST request to backend (Render API)
+            fetch("https://webdiff.onrender.com/compare", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ url1, url2 })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response, show the results
+                console.log("Comparison data:", data);
+                document.getElementById("result-container").style.display = "block";
+            })
+            .catch(error => {
+                console.error("Error:", error);
+            });
+        });
+
+        // Handle Excel download
+        document.getElementById("download-btn").addEventListener("click", function () {
+            window.location.href = "https://webdiff.onrender.com/download";  // Endpoint to download the Excel file
+        });
+    </script>
 </body>
+
 </html>

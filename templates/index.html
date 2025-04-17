@@ -6,85 +6,66 @@
   <title>WebDiff - Website Text Comparator</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #1e3c72, #2a5298);
+      font-family: Arial, sans-serif;
+      background-color: #f4f7fb;
+      color: #333;
       margin: 0;
       padding: 0;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
     }
-
     .container {
-      background: #ffffff10;
-      backdrop-filter: blur(10px);
-      padding: 2rem;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-      margin-top: 4rem;
       max-width: 600px;
-      width: 90%;
+      margin: 50px auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-
     h1 {
-      text-align: center;
       font-size: 2rem;
-      margin-bottom: 0.2rem;
+      color: #333;
+      text-align: center;
     }
-
     .version {
       text-align: center;
-      font-size: 0.9rem;
-      color: #ddd;
-      margin-bottom: 1.5rem;
+      font-size: 1.1rem;
+      color: #666;
+      margin-top: 5px;
     }
-
+    form {
+      margin-top: 20px;
+    }
     label {
-      font-weight: 600;
-      margin-top: 1rem;
+      font-size: 1rem;
+      color: #333;
+      margin-bottom: 5px;
       display: block;
     }
-
-    input[type="url"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 0.5rem;
-      border: none;
-      border-radius: 8px;
-      font-size: 1rem;
-    }
-
-    button {
+    select, button {
       width: 100%;
       padding: 12px;
-      margin-top: 1.5rem;
-      background-color: #28a745;
-      color: #fff;
+      margin: 10px 0;
+      border-radius: 4px;
+      border: 1px solid #ccc;
       font-size: 1rem;
-      border: none;
-      border-radius: 8px;
+    }
+    select:focus, button:focus {
+      outline: none;
+      border-color: #007bff;
+    }
+    button {
+      background-color: #007bff;
+      color: #fff;
       cursor: pointer;
-      transition: all 0.3s ease;
     }
-
     button:hover {
-      background-color: #218838;
-      transform: scale(1.03);
+      background-color: #0056b3;
     }
-
     footer {
-      margin-top: auto;
-      padding: 1rem;
-      font-size: 0.8rem;
-      color: #aaa;
-    }
-
-    @media screen and (max-width: 600px) {
-      h1 {
-        font-size: 1.5rem;
-      }
+      text-align: center;
+      font-size: 0.9rem;
+      color: #888;
+      padding: 10px 0;
+      margin-top: 50px;
     }
   </style>
 </head>
@@ -93,11 +74,15 @@
     <h1>🕵️‍♂️ WebDiff</h1>
     <div class="version">Website Text Comparator - Version 1.1</div>
     <form id="url-form">
-      <label for="url1">Archived URL:</label>
-      <input type="url" id="url1" name="archived_url" placeholder="https://web.archive.org/..." required />
+      <label for="doc_type">Select Document Type:</label>
+      <select id="doc_type" name="doc_type" required>
+        <option value="" disabled selected>Select Document Type</option>
+      </select>
 
-      <label for="url2">Current URL:</label>
-      <input type="url" id="url2" name="current_url" placeholder="https://www.gov.uk/..." required />
+      <label for="archived_url">Select Archived URL:</label>
+      <select id="archived_url" name="archived_url" required>
+        <option value="" disabled selected>Select Archived URL</option>
+      </select>
 
       <button type="submit">🔍 Compare & Download Excel</button>
     </form>
@@ -106,34 +91,104 @@
     © 2025 WebDiff Tool — Built for intelligent document comparison
   </footer>
 
-  <script>
-    document.getElementById("url-form").addEventListener("submit", function(event) {
-      event.preventDefault();  // Prevent form from reloading the page
-
-      const url1 = document.getElementById("url1").value;
-      const url2 = document.getElementById("url2").value;
-
-      console.log('Sending request with:', { archived_url: url1, current_url: url2 });
-
-      fetch('https://yourapp.onrender.com/compare', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          archived_url: url1,
-          current_url: url2
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
-        console.log('Response data:', data);
-        alert("Comparison complete! Check the results.");
-      })
-      .catch(error => {
-        console.error("Error:", error);
-        alert("Something went wrong! Please check the URLs and try again.");
-      });
+  <<script>
+    document.addEventListener("DOMContentLoaded", function () {
+      fetch("http://127.0.0.1:5000/get-doc-types")
+        .then((response) => response.json())
+        .then((data) => {
+          const docTypeSelect = document.getElementById("doc_type");
+          for (const docType in data) {
+            const option = document.createElement("option");
+            option.value = docType;
+            option.textContent = docType.replace("_", " ").toUpperCase();
+            docTypeSelect.appendChild(option);
+          }
+        });
+  
+      document
+        .getElementById("doc_type")
+        .addEventListener("change", function (event) {
+          const docType = event.target.value;
+          const archivedUrlSelect = document.getElementById("archived_url");
+  
+          archivedUrlSelect.innerHTML =
+            '<option value="" disabled selected>Select Archived URL</option>';
+  
+          if (docType) {
+            fetch("http://127.0.0.1:5000/get-doc-types")
+              .then((response) => response.json())
+              .then((data) => {
+                const archivedUrls = data[docType];
+                archivedUrls.forEach((url) => {
+                  const option = document.createElement("option");
+                  option.value = url;
+  
+                  // Match Wayback Machine timestamp (14 digits after /web/)
+                  const match = url.match(/\/web\/(\d{14})\//);
+                  if (match) {
+                    const raw = match[1];
+                    const year = raw.slice(0, 4);
+                    const month = raw.slice(4, 6);
+                    const day = raw.slice(6, 8);
+                    const hour = raw.slice(8, 10);
+                    const minute = raw.slice(10, 12);
+  
+                    const date = new Date(
+                      `${year}-${month}-${day}T${hour}:${minute}:00`
+                    );
+  
+                    const formattedDate = date.toLocaleString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    });
+  
+                    option.textContent = formattedDate;
+                  } else {
+                    option.textContent = url; // fallback
+                  }
+  
+                  archivedUrlSelect.appendChild(option);
+                });
+              });
+          }
+        });
+  
+      document
+        .getElementById("url-form")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+          const archivedUrl = document.getElementById("archived_url").value;
+          const docType = document.getElementById("doc_type").value;
+  
+          fetch("http://127.0.0.1:5000/compare-fixed", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ archived_url: archivedUrl, doc_type: docType }),
+          })
+            .then((response) => {
+              if (!response.ok) throw new Error("Failed to generate Excel file");
+              return response.blob();
+            })
+            .then((blob) => {
+              const link = document.createElement("a");
+              link.href = URL.createObjectURL(blob);
+              link.download = "comparison_result.xlsx";
+              document.body.appendChild(link);
+              link.click();
+              link.remove();
+              alert("✅ Comparison complete! Excel file downloaded.");
+            })
+            .catch((error) => {
+              console.error("❌ Error:", error);
+              alert("Something went wrong! Please try again.");
+            });
+        });
     });
   </script>
 </body>

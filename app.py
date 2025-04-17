@@ -18,7 +18,7 @@ FIXED_URLS = {
 }
 
 # --- Fetch latest archives from Wayback Machine ---
-def get_last_archives(original_url, count=10):
+def get_last_archives(original_url, count=3):
     cdx_api = "http://web.archive.org/cdx/search/cdx"
     params = {
         "url": original_url,
